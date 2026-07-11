@@ -13,33 +13,17 @@
 </head>
 <body>
     <h1>🔒 Erka Trader Pro</h1>
-    <input type="password" id="pass" placeholder="Şifre gir" style="padding:12px;font-size:18px;">
+    <input type="password" id="pass" placeholder="Şifre gir">
     <button onclick="checkPass()">Giriş</button>
 
     <div id="content" style="display:none;">
         <h2>Hoş geldin Erkan</h2>
         <button onclick="getBTC()">BTC Fiyatı</button>
-        <button onclick="getAllCoins()">Tüm Coinler (Otomatik Yenilenir)</button>
+        <button onclick="getAllCoins()">Tüm Coinler</button>
         <div id="result" class="result"></div>
     </div>
 
     <script>
         function checkPass() {
             if (document.getElementById('pass').value === "Serkan.456154") {
-                document.getElementById('content').style.display = 'block';
-                getAllCoins();
-            } else {
-                alert("Yanlış şifre!");
-            }
-        }
-        function getBTC() {
-            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-                .then(r => r.json())
-                .then(d => document.getElementById('result').innerHTML = 'BTC: $' + parseFloat(d.price).toLocaleString());
-        }
-        function getAllCoins() {
-            fetch('https://api.binance.com/api/v3/ticker/24hr')
-                .then(r => r.json())
-                .then(data => {
-                    let html = '<h3>Tüm Coinler (24s Değişim) - Otomatik Yenileniyor</h3>';
-                    data.sort((a,b) => Math.abs(b.priceChangePercent) - Math.abs(a.priceChangePercent)).
+                document.getElementById('content').
