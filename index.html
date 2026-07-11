@@ -3,37 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erka Trader</title>
+    <title>Erka Trader Pro</title>
     <style>
         body { background: #0a0a0a; color: #00ff9f; font-family: Arial; padding: 20px; text-align: center; }
         button { padding: 15px 30px; font-size: 18px; background: #00ff9f; color: #000; border: none; border-radius: 8px; margin: 10px; }
-        .result { margin-top: 30px; font-size: 24px; }
+        input { padding: 12px; font-size: 18px; margin: 10px; width: 220px; }
+        .result { margin-top: 30px; font-size: 18px; background: #1a1a1a; padding: 15px; border-radius: 8px; text-align: left; max-height: 500px; overflow-y: auto; }
     </style>
 </head>
 <body>
-    <h1>🚀 Erka Trader</h1>
-    <button onclick="getBTC()">BTC Fiyatı</button>
-    <button onclick="getMarket()">Piyasa Özeti</button>
-    <div id="result" class="result"></div>
+    <h1>🔒 Erka Trader Pro</h1>
+    <input type="password" id="pass" placeholder="Şifre gir" style="padding:12px;font-size:18px;">
+    <button onclick="checkPass()">Giriş</button>
+
+    <div id="content" style="display:none;">
+        <h2>Hoş geldin Erkan</h2>
+        <button onclick="getBTC()">BTC Fiyatı</button>
+        <button onclick="getAllCoins()">Tüm Coinler (Otomatik Yenilenir)</button>
+        <div id="result" class="result"></div>
+    </div>
 
     <script>
+        function checkPass() {
+            if (document.getElementById('pass').value === "Serkan.456154") {
+                document.getElementById('content').style.display = 'block';
+                getAllCoins();
+            } else {
+                alert("Yanlış şifre!");
+            }
+        }
         function getBTC() {
             fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
                 .then(r => r.json())
                 .then(d => document.getElementById('result').innerHTML = 'BTC: $' + parseFloat(d.price).toLocaleString());
         }
-        function getMarket() {
+        function getAllCoins() {
             fetch('https://api.binance.com/api/v3/ticker/24hr')
                 .then(r => r.json())
                 .then(data => {
-                    let html = '';
-                    data.slice(0,8).forEach(c => {
-                        let ch = parseFloat(c.priceChangePercent);
-                        html += `<div>${c.symbol} <span style="color:${ch>=0?'lime':'red'}">${ch.toFixed(2)}%</span></div>`;
-                    });
-                    document.getElementById('result').innerHTML = html;
-                });
-        }
-    </script>
-</body>
-</html>
+                    let html = '<h3>Tüm Coinler (24s Değişim) - Otomatik Yenileniyor</h3>';
+                    data.sort((a,b) => Math.abs(b.priceChangePercent) - Math.abs(a.priceChangePercent)).
