@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erka Trader</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff9f; font-family: Arial; padding: 20px; text-align: center; }
+        button { padding: 15px 30px; font-size: 18px; background: #00ff9f; color: #000; border: none; border-radius: 8px; margin: 10px; }
+        .result { margin-top: 30px; font-size: 24px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Erka Trader</h1>
+    <button onclick="getBTC()">BTC Fiyatı</button>
+    <button onclick="getMarket()">Piyasa Özeti</button>
+    <div id="result" class="result"></div>
+
+    <script>
+        function getBTC() {
+            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+                .then(r => r.json())
+                .then(d => document.getElementById('result').innerHTML = 'BTC: $' + parseFloat(d.price).toLocaleString());
+        }
+        function getMarket() {
+            fetch('https://api.binance.com/api/v3/ticker/24hr')
+                .then(r => r.json())
+                .then(data => {
+                    let html = '';
+                    data.slice(0,8).forEach(c => {
+                        let ch = parseFloat(c.priceChangePercent);
+                        html += `<div>${c.symbol} <span style="color:${ch>=0?'lime':'red'}">${ch.toFixed(2)}%</span></div>`;
+                    });
+                    document.getElementById('result').innerHTML = html;
+                });
+        }
+    </script>
+</body>
+</html>
