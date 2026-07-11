@@ -26,4 +26,29 @@
     <script>
         function checkPass() {
             if (document.getElementById('pass').value === "Serkan.456154") {
-                document.getElementById('content').
+                document.getElementById('content').style.display = 'block';
+                getAllCoins();
+            } else {
+                alert("Yanlış şifre!");
+            }
+        }
+        function getBTC() {
+            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+                .then(r => r.json())
+                .then(d => document.getElementById('result').innerHTML = 'BTC: $' + parseFloat(d.price).toLocaleString());
+        }
+        function getAllCoins() {
+            fetch('https://api.binance.com/api/v3/ticker/24hr')
+                .then(r => r.json())
+                .then(data => {
+                    let html = '<h3>Tüm Coinler (24s Değişim)</h3>';
+                    data.sort((a,b) => Math.abs(b.priceChangePercent) - Math.abs(a.priceChangePercent)).slice(0,50).forEach(c => {
+                        let ch = parseFloat(c.priceChangePercent);
+                        html += `<div style="padding:6px 0;border-bottom:1px solid #333;">${c.symbol} <span style="color:${ch>=0?'lime':'red'}">${ch.toFixed(2)}%</span></div>`;
+                    });
+                    document.getElementById('result').innerHTML = html;
+                });
+        }
+    </script>
+</body>
+</html>
