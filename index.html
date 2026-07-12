@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erka Trader Pro • Auto Bot</title>
+    <title>Erka Trader Pro • Demo Bot</title>
     <style>
         body { background: #0f172a; color: #e0f2fe; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
         .header { background: #1e2937; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-size: 26px; font-weight: bold; color: #22c55e; }
         .balance-box { background: #334155; padding: 12px 25px; border-radius: 12px; font-size: 20px; }
-        .auto-bot { background: #1e40af; color: white; padding: 15px; border-radius: 12px; margin: 20px 0; }
+        .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; }
+        .section { background: #1e2937; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         button { padding: 14px 28px; font-size: 17px; background: #22c55e; color: #0f172a; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 8px 5px; }
+        .auto-bot { background: #1e40af; padding: 20px; border-radius: 12px; margin: 20px 0; color: white; }
         input, select { padding: 14px; font-size: 17px; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: #e0f2fe; margin: 8px; }
         .password-wrapper { position: relative; display: inline-block; }
         .toggle-eye { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 22px; color: #64748b; }
@@ -25,7 +27,7 @@
 <body>
 
 <div class="header">
-    <div class="logo">🚀 Erka Trader Pro • Auto Bot</div>
+    <div class="logo">🚀 Erka Trader Pro • Demo Bot</div>
     <div class="balance-box">
         Bakiye: <span id="balance">1000.00</span> USDT
     </div>
@@ -49,11 +51,11 @@
 
         <!-- AUTO BOT -->
         <div class="auto-bot">
-            <h3>🤖 Auto Bot (Para Kazanma Modu)</h3>
+            <h3>🤖 Otomatik Para Kazanma Botu (Demo)</h3>
             <button onclick="toggleAutoBot()">Botu Başlat / Durdur</button>
             <span id="botStatus" style="margin-left:20px; font-weight:bold;">DURDU</span>
-            <div id="botLog" style="margin-top:15px; font-size:15px; max-height:150px; overflow-y:auto;"></div>
-            <div id="profitSummary" style="margin-top:10px; font-size:18px; color:#22c55e;"></div>
+            <div id="botLog" style="margin-top:15px; font-size:15px; max-height:150px; overflow-y:auto; background:#0f172a; padding:10px; border-radius:8px;"></div>
+            <div id="botProfit" style="margin-top:10px; font-size:18px; color:#22c55e;">Toplam Kar: <span id="totalProfit">0.00</span> USDT</div>
         </div>
 
         <div style="margin-bottom:20px;">
@@ -102,8 +104,6 @@ let tradeHistory = [];
 let autoBotRunning = false;
 let botInterval = null;
 let totalProfit = 0;
-let winTrades = 0;
-let totalTrades = 0;
 
 // ==================== ŞİFRE ====================
 function togglePassword() {
@@ -165,7 +165,6 @@ async function loadMarketData() {
 function showPortfolio() {
     const container = document.getElementById('portfolioResult');
     let html = `<h3>Açık Pozisyonlar</h3>`;
-    
     if (Object.keys(positions).length === 0) {
         html += `<p>Henüz pozisyonunuz yok.</p>`;
     } else {
@@ -233,33 +232,11 @@ async function executeTrade() {
         updateBalance();
         showPortfolio();
     } catch (e) {
-        resultBox.innerHTML = `<p style="color:#ef4444">Hata oluştu.</p>`;
+        resultBox.innerHTML = `<p style="color:#ef4444">İşlem başarısız oldu.</p>`;
     }
 }
 
-// ==================== EMİR GEÇMİŞİ ====================
-function showHistory() {
-    const container = document.getElementById('historyResult');
-    if (tradeHistory.length === 0) {
-        container.innerHTML = `<p>Henüz işlem yok.</p>`;
-        return;
-    }
-    let html = `<table><tr><th>Zaman</th><th>İşlem</th><th>Coin</th><th>Miktar</th><th>Fiyat</th></tr>`;
-    tradeHistory.forEach(trade => {
-        const color = trade.type === "ALIM" ? "green" : "red";
-        html += `<tr>
-            <td>${trade.time}</td>
-            <td class="${color}"><strong>${trade.type}</strong></td>
-            <td>${trade.symbol}</td>
-            <td>${trade.amount.toFixed(6)}</td>
-            <td>$${trade.price}</td>
-        </tr>`;
-    });
-    html += `</table>`;
-    container.innerHTML = html;
-}
-
-// ==================== OTOMATİK BOT (PARA KAZANMAYA ODAKLI) ====================
+// ==================== OTOMATİK BOT ====================
 function toggleAutoBot() {
     const status = document.getElementById('botStatus');
     const log = document.getElementById('botLog');
@@ -282,43 +259,48 @@ function toggleAutoBot() {
                     const price = parseFloat(coin.lastPrice);
                     const change = parseFloat(coin.priceChangePercent);
 
-                    // PARA KAZANMA STRATEJİSİ
-                    if (change < -2 && !positions[symbol]) {
-                        const buyAmount = Math.min(50, userBalance * 0.15);
+                    // BÜYÜK DÜŞÜŞTE ALIM
+                    if (change < -3 && !positions[symbol]) {
+                        const buyAmount = Math.min(80, userBalance * 0.15);
                         if (userBalance >= buyAmount) {
                             const coinAmount = buyAmount / price;
                             userBalance -= buyAmount;
-                            positions[symbol] = { amount: coinAmount, avgPrice: price };
+
+                            if (!positions[symbol]) positions[symbol] = { amount: 0, avgPrice: 0 };
+                            const oldAmount = positions[symbol].amount;
+                            positions[symbol].avgPrice = ((positions[symbol].avgPrice * oldAmount) + (price * coinAmount)) / (oldAmount + coinAmount);
+                            positions[symbol].amount += coinAmount;
+
                             tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT ALIM", symbol, amount: coinAmount, price, total: buyAmount });
                             log.innerHTML += `BOT: ${symbol} alındı (${change.toFixed(1)}% düşüş)<br>`;
                         }
                     }
 
+                    // KARLI POZİSYONDA SATIŞ
                     if (positions[symbol]) {
                         const pos = positions[symbol];
                         const currentProfit = ((price - pos.avgPrice) / pos.avgPrice) * 100;
 
-                        if (currentProfit > 3) {
+                        if (currentProfit > 4) {
                             const sellAmount = pos.amount * price;
                             userBalance += sellAmount;
+                            totalProfit += (sellAmount - (pos.amount * pos.avgPrice));
                             delete positions[symbol];
+
                             tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT SATIM", symbol, amount: pos.amount, price, total: sellAmount });
                             log.innerHTML += `BOT: ${symbol} satıldı (+${currentProfit.toFixed(1)}% kar)<br>`;
-                            totalProfit += (currentProfit * pos.amount * pos.avgPrice / 100);
-                            winTrades++;
                         }
                     }
                 }
 
                 updateBalance();
                 showPortfolio();
-
-                document.getElementById('profitSummary').innerHTML = `Toplam Kar: $${totalProfit.toFixed(2)} | Win Rate: ${(winTrades / Math.max(totalTrades,1) * 100).toFixed(1)}%`;
+                document.getElementById('totalProfit').innerText = totalProfit.toFixed(2);
 
             } catch (e) {
                 log.innerHTML += "Bot hatası...<br>";
             }
-        }, 30000);
+        }, 25000);
 
     } else {
         autoBotRunning = false;
@@ -343,7 +325,7 @@ function showSection(section) {
 }
 
 window.onload = function() {
-    console.log("Erka Trader Pro - Auto Bot yüklendi.");
+    console.log("Erka Trader Pro - Demo Bot yüklendi.");
 };
 </script>
 
