@@ -105,7 +105,7 @@ let tradeHistory = [];
 let autoBotRunning = false;
 let botInterval = null;
 let totalProfit = 0;
-const FEE_RATE = 0.001; // %0.1
+const FEE_RATE = 0.001;
 
 // ==================== ŞİFRE ====================
 function togglePassword() {
@@ -218,7 +218,7 @@ async function executeTrade() {
                 resultBox.innerHTML = `<p style="color:#ef4444">Yetersiz bakiye!</p>`;
                 return;
             }
-            price = price * 0.999; // Maker alımda düşük fiyattan
+            price = price * 0.999;
             const coinAmount = netAmount / price;
             userBalance -= amount;
 
@@ -235,7 +235,7 @@ async function executeTrade() {
                 resultBox.innerHTML = `<p style="color:#ef4444">Yeterli coin yok!</p>`;
                 return;
             }
-            price = price * 1.001; // Maker satımda yüksek fiyattan
+            price = price * 1.001;
             const sellAmount = netAmount / price;
             positions[symbol].amount -= sellAmount;
             userBalance += netAmount;
@@ -275,11 +275,11 @@ function toggleAutoBot() {
                     const change = parseFloat(coin.priceChangePercent);
 
                     if (change < -3 && !positions[symbol] && userBalance > 50) {
-                        const buyAmount = Math.min(20, userBalance * 0.05);
+                        const buyAmount = Math.min(15, userBalance * 0.04);
                         if (userBalance >= buyAmount) {
                             const fee = buyAmount * FEE_RATE;
                             const netAmount = buyAmount - fee;
-                            price = price * 0.999; // Maker alımda düşük fiyattan
+                            price = price * 0.999;
                             const coinAmount = netAmount / price;
                             userBalance -= buyAmount;
 
@@ -301,7 +301,7 @@ function toggleAutoBot() {
                             const sellAmount = pos.amount * price;
                             const fee = sellAmount * FEE_RATE;
                             const netSell = sellAmount - fee;
-                            price = price * 1.001; // Maker satımda yüksek fiyattan
+                            price = price * 1.001;
                             userBalance += netSell;
                             totalProfit += (netSell - (pos.amount * pos.avgPrice));
                             delete positions[symbol];
