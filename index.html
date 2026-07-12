@@ -106,6 +106,7 @@ let autoBotRunning = false;
 let botInterval = null;
 let totalProfit = 0;
 const FEE_RATE = 0.001;
+const STOP_LOSS = 5;
 
 // ==================== ŞİFRE ====================
 function togglePassword() {
@@ -168,6 +169,7 @@ async function loadMarketData() {
 function showPortfolio() {
     const container = document.getElementById('portfolioResult');
     let html = `<h3>Açık Pozisyonlar (Anlık Kar/Zarar)</h3>`;
+    let totalValue = 0;
     
     if (Object.keys(positions).length === 0) {
         html += `<p>Henüz pozisyonunuz yok.</p>`;
@@ -179,6 +181,7 @@ function showPortfolio() {
             const currentValue = pos.amount * currentPrice;
             const pnl = currentValue - (pos.amount * pos.avgPrice);
             const pnlPercent = (pnl / (pos.amount * pos.avgPrice)) * 100;
+            totalValue += currentValue;
 
             html += `<tr>
                 <td>${symbol}</td>
@@ -188,7 +191,7 @@ function showPortfolio() {
                 <td class="${pnl >= 0 ? 'green' : 'red'}">$${pnl.toFixed(2)} (${pnlPercent.toFixed(1)}%)</td>
             </tr>`;
         }
-        html += `</table>`;
+        html += `</table><p style="margin-top:15px;">Toplam Portföy Değeri: <strong>$${totalValue.toFixed(2)}</strong></p>`;
     }
     container.innerHTML = html;
 }
@@ -275,7 +278,7 @@ function toggleAutoBot() {
                     const change = parseFloat(coin.priceChangePercent);
 
                     if (change < -3 && !positions[symbol] && userBalance > 50) {
-                        const buyAmount = Math.min(15, userBalance * 0.04);
+                        const buyAmount = Math.min(10, userBalance * 0.03);
                         if (userBalance >= buyAmount) {
                             const fee = buyAmount * FEE_RATE;
                             const netAmount = buyAmount - fee;
@@ -296,8 +299,9 @@ function toggleAutoBot() {
                     if (positions[symbol]) {
                         const pos = positions[symbol];
                         const currentProfit = ((price - pos.avgPrice) / pos.avgPrice) * 100;
+                        const currentLoss = -currentProfit;
 
-                        if (currentProfit > 4) {
+                        if (currentProfit > 1.5 || currentLoss > STOP_LOSS) {
                             const sellAmount = pos.amount * price;
                             const fee = sellAmount * FEE_RATE;
                             const netSell = sellAmount - fee;
@@ -307,7 +311,7 @@ function toggleAutoBot() {
                             delete positions[symbol];
 
                             tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT SATIM (Maker)", symbol, amount: pos.amount, price, total: netSell, fee });
-                            log.innerHTML += `BOT: ${symbol} satıldı (+${currentProfit.toFixed(1)}% kar)<br>`;
+                            log.innerHTML += `BOT: ${symbol} satıldı (${currentProfit > 0 ? '+' : ''}${currentProfit.toFixed(1)}% ${currentProfit > 0 ? 'kar' : 'zarar'})<br>`;
                         }
                     }
                 }
