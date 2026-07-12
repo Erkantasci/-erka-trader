@@ -3,69 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erka Trader Bot</title>
+    <title>Erka Trader Pro • Professional</title>
     <style>
-        body { background: linear-gradient(135deg, #0a0a0a, #1a1a2e); color: #00ff9f; font-family: Arial; padding: 20px; margin: 0; }
-        button { padding: 15px 30px; font-size: 18px; background: #00ff9f; color: #000; border: none; border-radius: 12px; margin: 10px; }
-        input { padding: 15px; font-size: 18px; margin: 10px; width: 240px; border-radius: 8px; border: 2px solid #00ff9f; background: #1a1a2e; color: #00ff9f; }
-        .result { margin-top: 30px; padding: 20px; background: rgba(26,26,46,0.9); border-radius: 12px; text-align: left; }
+        body { 
+            background: linear-gradient(135deg, #0a0a0a, #111827); 
+            color: #00ff9f; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { text-align: center; color: #00ff9f; text-shadow: 0 0 15px #00ff9f; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .balance { background: #1f2937; padding: 15px 25px; border-radius: 12px; font-size: 22px; }
+        button { 
+            padding: 14px 28px; 
+            font-size: 17px; 
+            background: linear-gradient(#00ff9f, #00cc7a); 
+            color: #000; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin: 8px; 
+        }
+        .card { 
+            background: #1f2937; 
+            padding: 25px; 
+            border-radius: 16px; 
+            margin: 15px 0; 
+            box-shadow: 0 10px 30px rgba(0, 255, 159, 0.1); 
+        }
+        input { 
+            padding: 14px; 
+            font-size: 17px; 
+            width: 260px; 
+            border-radius: 10px; 
+            border: 2px solid #00ff9f; 
+            background: #111827; 
+            color: #00ff9f; 
+            margin: 10px; 
+        }
+        .result { 
+            background: #111827; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-top: 20px; 
+            max-height: 500px; 
+            overflow-y: auto; 
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #374151; }
+        .green { color: #00ff9f; }
+        .red { color: #ff5555; }
     </style>
 </head>
 <body>
-    <h1>🚀 Erka Al-Sat Bot</h1>
-    <input type="password" id="pass" placeholder="Şifre gir">
-    <button onclick="checkPass()">Giriş</button>
+    <div class="container">
+        <h1>🚀 Erka Trader Pro</h1>
+        
+        <div id="login" class="card">
+            <h2>Giriş Yap</h2>
+            <input type="password" id="pass" placeholder="Şifrenizi girin">
+            <button onclick="login()">Giriş</button>
+        </div>
 
-    <div id="content" style="display:none;">
-        <h2>Hoş geldin Erkan - Bot Aktif</h2>
-        <button onclick="getBTC()">BTC Fiyatı</button>
-        <button onclick="simulateBuy()">Al (Simüle)</button>
-        <button onclick="simulateSell()">Sat (Simüle)</button>
-        <button onclick="getAllCoins()">Tüm Coinler</button>
-        <div id="result" class="result"></div>
+        <div id="dashboard" style="display:none;">
+            <div class="header">
+                <div>
+                    <h2>Hoş geldin Erkan</h2>
+                </div>
+                <div class="balance">
+                    Bakiye: <span id="balance">1000</span> USDT
+                </div>
+            </div>
+
+            <div class="card">
+                <button onclick="getPrice('BTCUSDT')">BTC Fiyatı</button>
+                <button onclick="showMarket()">Piyasa</button>
+                <button onclick="showPortfolio()">Portföyüm</button>
+                <button onclick="simulateTrade()">Al-Sat Yap</button>
+            </div>
+
+            <div id="result" class="result"></div>
+        </div>
     </div>
 
     <script>
-        let balance = 1000; // USDT bakiye
+        let userBalance = 1000;
+        let positions = {}; // Pozisyonlar
 
-        function checkPass() {
-            if (document.getElementById('pass').value === "Serkan.456154") {
-                document.getElementById('content').style.display = 'block';
+        function login() {
+            const password = document.getElementById('pass').value;
+            if (password === "Serkan.456154") {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                updateBalance();
             } else {
                 alert("Yanlış şifre!");
             }
         }
-        function getBTC() {
-            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-                .then(r => r.json())
-                .then(d => document.getElementById('result').innerHTML = 'BTC: $' + parseFloat(d.price).toLocaleString());
+
+        function updateBalance() {
+            document.getElementById('balance').innerText = userBalance.toFixed(2);
         }
-        function simulateBuy() {
-            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-                .then(r => r.json())
-                .then(d => {
-                    let price = parseFloat(d.price);
-                    let amount = 100; // 100 USDT ile al
-                    let coins = amount / price;
-                    balance -= amount;
-                    document.getElementById('result').innerHTML = `Alındı: ${coins.toFixed(6)} BTC (${amount} USDT)<br>Bakiye: $${balance}`;
-                });
-        }
-        function simulateSell() {
-            document.getElementById('result').innerHTML = 'Satıldı (Simüle) - Kar/Zarar hesaplanıyor...';
-        }
-        function getAllCoins() {
-            fetch('https://api.binance.com/api/v3/ticker/24hr')
-                .then(r => r.json())
-                .then(data => {
-                    let html = '<h3>Tüm Coinler</h3>';
-                    data.slice(0,20).forEach(c => {
-                        let ch = parseFloat(c.priceChangePercent);
-                        html += `<div>${c.symbol} $${parseFloat(c.lastPrice).toLocaleString()} <span style="color:${ch>=0?'lime':'red'}">${ch.toFixed(2)}%</span></div>`;
-                    });
-                    document.getElementById('result').innerHTML = html;
-                });
-        }
-    </script>
-</body>
-</html>
+
+        async function getPrice(symbol) {
+            try {
+                const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+                const data = await res.json();
+                const price = parseFloat(data.price);
+                document.getElementById('result').innerHTML = `
+                    <h3>${symbol}</h3>
+                    <p style="font-size:28px;">$${price.toLocaleString()}</p>
+                `;
+            } catch (e) {
+                document.getElementById('result
