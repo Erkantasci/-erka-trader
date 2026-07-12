@@ -3,26 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erka Trader Pro • Professional Terminal</title>
+    <title>Erka Trader Pro</title>
     <style>
-        body { background: #0f172a; color: #e0f2fe; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-        .header { background: #1e2937; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 28px; font-weight: bold; color: #22c55e; }
-        .balance-box { background: #334155; padding: 12px 25px; border-radius: 12px; font-size: 20px; }
-        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab { padding: 12px 30px; background: #1e2937; border: none; color: #e0f2fe; font-size: 17px; border-radius: 10px; cursor: pointer; }
-        .tab.active { background: #22c55e; color: #0f172a; font-weight: bold; }
-        .section { background: #1e2937; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        button { padding: 14px 28px; font-size: 17px; background: #22c55e; color: #0f172a; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 8px 5px; }
-        button:hover { background: #16a34a; }
-        input { padding: 14px; font-size: 17px; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: #e0f2fe; width: 280px; margin: 8px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        body { 
+            background: #0f172a; 
+            color: #e0f2fe; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+        }
+        .header { 
+            background: #1e2937; 
+            padding: 20px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .logo { font-size: 26px; font-weight: bold; color: #22c55e; }
+        .balance-box { 
+            background: #334155; 
+            padding: 12px 25px; 
+            border-radius: 12px; 
+            font-size: 20px; 
+        }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .section { 
+            background: #1e2937; 
+            padding: 30px; 
+            border-radius: 16px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+        }
+        button { 
+            padding: 14px 28px; 
+            font-size: 17px; 
+            background: #22c55e; 
+            color: #0f172a; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin: 8px 5px; 
+        }
+        input { 
+            padding: 14px; 
+            font-size: 17px; 
+            border-radius: 10px; 
+            border: 2px solid #475569; 
+            background: #0f172a; 
+            color: #e0f2fe; 
+            width: 300px; 
+            margin: 8px; 
+        }
+        .password-container {
+            position: relative;
+            display: inline-block;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #64748b;
+            font-size: 20px;
+        }
+        .result-box { 
+            background: #0f172a; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-top: 20px; 
+            min-height: 150px; 
+        }
+        table { width: 100%; border-collapse: collapse; }
         th, td { padding: 14px; text-align: left; border-bottom: 1px solid #475569; }
         th { background: #334155; }
         .green { color: #22c55e; font-weight: bold; }
         .red { color: #ef4444; font-weight: bold; }
-        .result-box { background: #0f172a; padding: 20px; border-radius: 12px; margin-top: 20px; min-height: 120px; }
     </style>
 </head>
 <body>
@@ -36,105 +93,23 @@
 
 <div class="container">
 
-    <!-- LOGIN -->
+    <!-- GİRİŞ EKRANI -->
     <div id="loginSection" class="section">
         <h2>Giriş Yap</h2>
-        <input type="password" id="passwordInput" placeholder="Şifrenizi girin">
+        <div class="password-container">
+            <input type="password" id="passwordInput" placeholder="Şifrenizi girin" 
+                   onkeypress="if (event.key === 'Enter') login()">
+            <span class="toggle-password" onclick="togglePassword()">👁️</span>
+        </div>
+        <br>
         <button onclick="login()">Giriş Yap</button>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- ANA PANEL -->
     <div id="dashboard" style="display:none;">
-        
-        <!-- TABS -->
-        <div class="tabs">
-            <button class="tab active" onclick="showSection('market')">Piyasa</button>
-            <button class="tab" onclick="showSection('portfolio')">Portföyüm</button>
-            <button class="tab" onclick="showSection('trade')">Al-Sat</button>
-            <button class="tab" onclick="showSection('history')">Emir Geçmişi</button>
-        </div>
 
-        <!-- MARKET SECTION -->
-        <div id="market" class="section">
-            <h2>Piyasa Verileri</h2>
-            <button onclick="loadMarketData()">Piyasayı Güncelle</button>
-            <div id="marketResult" class="result-box"></div>
-        </div>
-
-        <!-- PORTFOLIO SECTION -->
-        <div id="portfolio" class="section" style="display:none;">
-            <h2>Portföyüm</h2>
-            <div id="portfolioResult" class="result-box"></div>
-        </div>
-
-        <!-- TRADE SECTION -->
-        <div id="trade" class="section" style="display:none;">
-            <h2>Al-Sat İşlemi</h2>
-            <input type="text" id="tradeSymbol" placeholder="Coin (BTCUSDT)">
-            <input type="number" id="tradeAmount" placeholder="Miktar (USDT)">
-            <select id="tradeType" style="padding:14px; font-size:17px; border-radius:10px; background:#0f172a; color:#e0f2fe; border:2px solid #475569;">
-                <option value="buy">AL</option>
-                <option value="sell">SAT</option>
-            </select>
-            <button onclick="executeTrade()">İşlemi Gerçekleştir</button>
-            <div id="tradeResult" class="result-box"></div>
-        </div>
-
-        <!-- HISTORY SECTION -->
-        <div id="history" class="section" style="display:none;">
-            <h2>Emir Geçmişi</h2>
-            <div id="historyResult" class="result-box"></div>
-        </div>
-
-    </div>
-</div>
-
-<script>
-// ==================== DEĞİŞKENLER ====================
-let userBalance = 1000;
-let positions = {};
-let tradeHistory = [];
-
-// ==================== GİRİŞ ====================
-function login() {
-    const pass = document.getElementById('passwordInput').value;
-    if (pass === "Serkan.456154") {
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        updateBalance();
-        loadMarketData();
-    } else {
-        alert("Şifre yanlış!");
-    }
-}
-
-function updateBalance() {
-    document.getElementById('balance').innerText = userBalance.toFixed(2);
-}
-
-// ==================== PİYASA VERİLERİ ====================
-async function loadMarketData() {
-    const container = document.getElementById('marketResult');
-    container.innerHTML = "Yükleniyor...";
-
-    try {
-        const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
-        const data = await res.json();
-
-        let html = `<table><tr><th>Coin</th><th>Fiyat</th><th>24s Değişim</th><th>Hacim</th></tr>`;
-
-        data.sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-            .slice(0, 40)
-            .forEach(coin => {
-                const change = parseFloat(coin.priceChangePercent);
-                const colorClass = change >= 0 ? 'green' : 'red';
-                html += `<tr>
-                    <td><strong>${coin.symbol}</strong></td>
-                    <td>$${parseFloat(coin.lastPrice).toLocaleString()}</td>
-                    <td class="${colorClass}">${change.toFixed(2)}%</td>
-                    <td>$${parseFloat(coin.quoteVolume).toLocaleString()}</td>
-                </tr>`;
-            });
-
-        html += `</table>`;
-        container
+        <div class="tabs" style="margin-bottom: 20px;">
+            <button onclick="showSection('market')">Piyasa</button>
+            <button onclick="showSection('portfolio')">Portföy</button>
+            <button onclick="showSection('trade')">Al-Sat</button>
+            <button onclick="showSection('history')">Geçmiş</button
