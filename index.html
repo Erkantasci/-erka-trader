@@ -3,44 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erka Trader Pro</title>
+    <title>Erka Trader Bot</title>
     <style>
         body { background: linear-gradient(135deg, #0a0a0a, #1a1a2e); color: #00ff9f; font-family: Arial; padding: 20px; margin: 0; }
         button { padding: 15px 30px; font-size: 18px; background: #00ff9f; color: #000; border: none; border-radius: 12px; margin: 10px; }
         input { padding: 15px; font-size: 18px; margin: 10px; width: 240px; border-radius: 8px; border: 2px solid #00ff9f; background: #1a1a2e; color: #00ff9f; }
-        .result { margin-top: 30px; padding: 20px; background: rgba(26,26,46,0.9); border-radius: 12px; text-align: left; max-height: 600px; overflow-y: auto; }
-        .big-change { font-weight: bold; animation: flash 1s; }
-        @keyframes flash { 0% { background: yellow; } 100% { background: transparent; } }
+        .result { margin-top: 30px; padding: 20px; background: rgba(26,26,46,0.9); border-radius: 12px; text-align: left; }
     </style>
 </head>
 <body>
-    <h1>🚀 Erka Trader Pro - Ani Değişimler</h1>
+    <h1>🚀 Erka Al-Sat Bot</h1>
     <input type="password" id="pass" placeholder="Şifre gir">
     <button onclick="checkPass()">Giriş</button>
 
     <div id="content" style="display:none;">
-        <button onclick="getAllCoins()">Tüm Coinler (Ani Değişimler Vurgulu)</button>
+        <h2>Hoş geldin Erkan - Bot Aktif</h2>
+        <button onclick="getBTC()">BTC Fiyatı</button>
+        <button onclick="simulateBuy()">Al (Simüle)</button>
+        <button onclick="simulateSell()">Sat (Simüle)</button>
+        <button onclick="getAllCoins()">Tüm Coinler</button>
         <div id="result" class="result"></div>
     </div>
 
     <script>
+        let balance = 1000; // USDT bakiye
+
         function checkPass() {
             if (document.getElementById('pass').value === "Serkan.456154") {
                 document.getElementById('content').style.display = 'block';
-                getAllCoins();
             } else {
                 alert("Yanlış şifre!");
             }
+        }
+        function getBTC() {
+            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+                .then(r => r.json())
+                .then(d => document.getElementById('result').innerHTML = 'BTC: $' + parseFloat(d.price).toLocaleString());
+        }
+        function simulateBuy() {
+            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+                .then(r => r.json())
+                .then(d => {
+                    let price = parseFloat(d.price);
+                    let amount = 100; // 100 USDT ile al
+                    let coins = amount / price;
+                    balance -= amount;
+                    document.getElementById('result').innerHTML = `Alındı: ${coins.toFixed(6)} BTC (${amount} USDT)<br>Bakiye: $${balance}`;
+                });
+        }
+        function simulateSell() {
+            document.getElementById('result').innerHTML = 'Satıldı (Simüle) - Kar/Zarar hesaplanıyor...';
         }
         function getAllCoins() {
             fetch('https://api.binance.com/api/v3/ticker/24hr')
                 .then(r => r.json())
                 .then(data => {
-                    let html = '<h3>Tüm Coinler - Ani Değişimler Vurgulu</h3>';
-                    data.sort((a,b) => Math.abs(b.priceChangePercent) - Math.abs(a.priceChangePercent)).slice(0,50).forEach(c => {
+                    let html = '<h3>Tüm Coinler</h3>';
+                    data.slice(0,20).forEach(c => {
                         let ch = parseFloat(c.priceChangePercent);
-                        let cls = Math.abs(ch) > 5 ? 'big-change' : '';
-                        html += `<div class="${cls}" style="padding:8px 0;border-bottom:1px solid #333;">${c.symbol} <span style="color:${ch>=0?'lime':'red'}">${ch.toFixed(2)}%</span></div>`;
+                        html += `<div>${c.symbol} $${parseFloat(c.lastPrice).toLocaleString()} <span style="color:${ch>=0?'lime':'red'}">${ch.toFixed(2)}%</span></div>`;
                     });
                     document.getElementById('result').innerHTML = html;
                 });
