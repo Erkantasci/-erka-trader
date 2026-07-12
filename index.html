@@ -53,7 +53,7 @@
 
         <!-- AUTO BOT -->
         <div class="card">
-            <h2>🤖 Otomatik Para Kazanma Botu (Maker Stratejisi)</h2>
+            <h2>🤖 Otomatik Para Kazanma Botu</h2>
             <button onclick="toggleAutoBot()">Botu Başlat / Durdur</button>
             <span id="botStatus" style="margin-left:20px; font-weight:bold; color:#ef4444;">DURDU</span>
             <div id="botLog" style="margin-top:15px; font-size:15px; max-height:160px; overflow-y:auto; background:#111827; padding:12px; border-radius:8px;"></div>
@@ -107,6 +107,7 @@ let botInterval = null;
 let totalProfit = 0;
 const FEE_RATE = 0.001;
 const STOP_LOSS = 5;
+const MAX_POSITIONS = 3;
 
 // ==================== ŞİFRE ====================
 function togglePassword() {
@@ -263,7 +264,7 @@ function toggleAutoBot() {
         autoBotRunning = true;
         status.innerHTML = "ÇALIŞIYOR";
         status.style.color = "#22c55e";
-        log.innerHTML = "Bot başlatıldı. Maker stratejisi ile para kazanmaya odaklandı...<br>";
+        log.innerHTML = "Bot başlatıldı. Akıllı strateji ile para kazanmaya odaklandı...<br>";
 
         botInterval = setInterval(async () => {
             if (!autoBotRunning) return;
@@ -277,7 +278,7 @@ function toggleAutoBot() {
                     let price = parseFloat(coin.lastPrice);
                     const change = parseFloat(coin.priceChangePercent);
 
-                    if (change < -3 && !positions[symbol] && userBalance > 50) {
+                    if (change < -3 && !positions[symbol] && userBalance > 50 && Object.keys(positions).length < MAX_POSITIONS) {
                         const buyAmount = Math.min(10, userBalance * 0.03);
                         if (userBalance >= buyAmount) {
                             const fee = buyAmount * FEE_RATE;
