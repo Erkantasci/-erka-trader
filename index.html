@@ -53,7 +53,7 @@
 
         <!-- AUTO BOT -->
         <div class="card">
-            <h2>🤖 Otomatik Para Kazanma Botu</h2>
+            <h2>🤖 Otomatik Para Kazanma Botu (Maker Stratejisi)</h2>
             <button onclick="toggleAutoBot()">Botu Başlat / Durdur</button>
             <span id="botStatus" style="margin-left:20px; font-weight:bold; color:#ef4444;">DURDU</span>
             <div id="botLog" style="margin-top:15px; font-size:15px; max-height:160px; overflow-y:auto; background:#111827; padding:12px; border-radius:8px;"></div>
@@ -105,6 +105,7 @@ let tradeHistory = [];
 let autoBotRunning = false;
 let botInterval = null;
 let totalProfit = 0;
+const FEE_RATE = 0.001; // %0.1
 
 // ==================== ŞİFRE ====================
 function togglePassword() {
@@ -207,14 +208,18 @@ async function executeTrade() {
     try {
         const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
         const data = await res.json();
-        const price = parseFloat(data.price);
+        let price = parseFloat(data.price);
+
+        const fee = amount * FEE_RATE;
+        const netAmount = amount - fee;
 
         if (type === "buy") {
             if (userBalance < amount) {
                 resultBox.innerHTML = `<p style="color:#ef4444">Yetersiz bakiye!</p>`;
                 return;
             }
-            const coinAmount = amount / price;
+            price = price * 0.999; // Maker alımda düşük fiyattan
+            const coinAmount = netAmount / price;
             userBalance -= amount;
 
             if (!positions[symbol]) positions[symbol] = { amount: 0, avgPrice: 0 };
@@ -222,21 +227,22 @@ async function executeTrade() {
             positions[symbol].avgPrice = ((positions[symbol].avgPrice * oldAmount) + (price * coinAmount)) / (oldAmount + coinAmount);
             positions[symbol].amount += coinAmount;
 
-            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "ALIM", symbol, amount: coinAmount, price, total: amount });
-            resultBox.innerHTML = `<p style="color:#22c55e"><strong>ALIM BAŞARILI</strong></p>`;
+            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "ALIM (Maker)", symbol, amount: coinAmount, price, total: netAmount, fee });
+            resultBox.innerHTML = `<p style="color:#22c55e"><strong>ALIM BAŞARILI (Maker)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
         } 
         else if (type === "sell") {
-            if (!positions[symbol] || positions[symbol].amount < (amount / price)) {
+            if (!positions[symbol] || positions[symbol].amount < (netAmount / price)) {
                 resultBox.innerHTML = `<p style="color:#ef4444">Yeterli coin yok!</p>`;
                 return;
             }
-            const sellAmount = amount / price;
+            price = price * 1.001; // Maker satımda yüksek fiyattan
+            const sellAmount = netAmount / price;
             positions[symbol].amount -= sellAmount;
-            userBalance += amount;
+            userBalance += netAmount;
             if (positions[symbol].amount <= 0) delete positions[symbol];
 
-            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "SATIM", symbol, amount: sellAmount, price, total: amount });
-            resultBox.innerHTML = `<p style="color:#22c55e"><strong>SATIM BAŞARILI</strong></p>`;
+            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "SATIM (Maker)", symbol, amount: sellAmount, price, total: netAmount, fee });
+            resultBox.innerHTML = `<p style="color:#22c55e"><strong>SATIM BAŞARILI (Maker)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
         }
         updateBalance();
         showPortfolio();
@@ -254,7 +260,7 @@ function toggleAutoBot() {
         autoBotRunning = true;
         status.innerHTML = "ÇALIŞIYOR";
         status.style.color = "#22c55e";
-        log.innerHTML = "Bot başlatıldı. Para kazanmaya odaklandı...<br>";
+        log.innerHTML = "Bot başlatıldı. Maker stratejisi ile para kazanmaya odaklandı...<br>";
 
         botInterval = setInterval(async () => {
             if (!autoBotRunning) return;
@@ -265,13 +271,16 @@ function toggleAutoBot() {
 
                 for (let coin of data) {
                     const symbol = coin.symbol;
-                    const price = parseFloat(coin.lastPrice);
+                    let price = parseFloat(coin.lastPrice);
                     const change = parseFloat(coin.priceChangePercent);
 
-                    if (change < -3 && !positions[symbol]) {
-                        const buyAmount = Math.min(25, userBalance * 0.08);
+                    if (change < -3 && !positions[symbol] && userBalance > 50) {
+                        const buyAmount = Math.min(20, userBalance * 0.05);
                         if (userBalance >= buyAmount) {
-                            const coinAmount = buyAmount / price;
+                            const fee = buyAmount * FEE_RATE;
+                            const netAmount = buyAmount - fee;
+                            price = price * 0.999; // Maker alımda düşük fiyattan
+                            const coinAmount = netAmount / price;
                             userBalance -= buyAmount;
 
                             if (!positions[symbol]) positions[symbol] = { amount: 0, avgPrice: 0 };
@@ -279,7 +288,7 @@ function toggleAutoBot() {
                             positions[symbol].avgPrice = ((positions[symbol].avgPrice * oldAmount) + (price * coinAmount)) / (oldAmount + coinAmount);
                             positions[symbol].amount += coinAmount;
 
-                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT ALIM", symbol, amount: coinAmount, price, total: buyAmount });
+                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT ALIM (Maker)", symbol, amount: coinAmount, price, total: netAmount, fee });
                             log.innerHTML += `BOT: ${symbol} alındı (${change.toFixed(1)}% düşüş)<br>`;
                         }
                     }
@@ -290,11 +299,14 @@ function toggleAutoBot() {
 
                         if (currentProfit > 4) {
                             const sellAmount = pos.amount * price;
-                            userBalance += sellAmount;
-                            totalProfit += (sellAmount - (pos.amount * pos.avgPrice));
+                            const fee = sellAmount * FEE_RATE;
+                            const netSell = sellAmount - fee;
+                            price = price * 1.001; // Maker satımda yüksek fiyattan
+                            userBalance += netSell;
+                            totalProfit += (netSell - (pos.amount * pos.avgPrice));
                             delete positions[symbol];
 
-                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT SATIM", symbol, amount: pos.amount, price, total: sellAmount });
+                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT SATIM (Maker)", symbol, amount: pos.amount, price, total: netSell, fee });
                             log.innerHTML += `BOT: ${symbol} satıldı (+${currentProfit.toFixed(1)}% kar)<br>`;
                         }
                     }
