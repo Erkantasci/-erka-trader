@@ -5,133 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Erka Trader Pro</title>
     <style>
-        body { background: #0f172a; color: #e0f2fe; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-        .header { background: #1e2937; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 26px; font-weight: bold; color: #22c55e; }
-        .balance-box { background: #334155; padding: 12px 25px; border-radius: 12px; font-size: 20px; }
-        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
-        .section { background: #1e2937; padding: 30px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        button { padding: 14px 28px; font-size: 17px; background: #22c55e; color: #0f172a; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        input { padding: 14px; font-size: 17px; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: #e0f2fe; width: 300px; margin: 8px; }
+        body { background: #0f172a; color: #e0f2fe; font-family: Arial; padding: 40px; text-align: center; }
+        input { padding: 15px; font-size: 18px; width: 280px; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: #e0f2fe; }
+        button { padding: 15px 40px; font-size: 18px; background: #22c55e; color: #0f172a; border: none; border-radius: 10px; margin: 20px 10px; cursor: pointer; }
+        .eye { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 22px; }
         .password-wrapper { position: relative; display: inline-block; }
-        .toggle-eye { 
-            position: absolute; 
-            right: 15px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            cursor: pointer; 
-            font-size: 22px; 
-            color: #64748b;
-            user-select: none;
-        }
-        .result-box { background: #0f172a; padding: 20px; border-radius: 12px; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #475569; }
-        th { background: #334155; }
-        .green { color: #22c55e; font-weight: bold; }
-        .red { color: #ef4444; font-weight: bold; }
     </style>
 </head>
 <body>
-
-<div class="header">
-    <div class="logo">🚀 Erka Trader Pro</div>
-    <div class="balance-box">
-        Bakiye: <span id="balance">1000.00</span> USDT
-    </div>
-</div>
-
-<div class="container">
-
-    <!-- GİRİŞ -->
-    <div id="loginSection" class="section">
+    <h1>🚀 Erka Trader Pro</h1>
+    
+    <div id="login">
         <h2>Giriş Yap</h2>
-        
         <div class="password-wrapper">
-            <input type="password" id="passwordInput" placeholder="Şifrenizi girin">
-            <span class="toggle-eye" onclick="togglePassword()">👁️</span>
+            <input type="password" id="passwordInput" placeholder="Şifre girin" onkeypress="if(event.key === 'Enter') login()">
+            <span class="eye" onclick="togglePassword()">👁️</span>
         </div>
-        
-        <br>
+        <br><br>
         <button onclick="login()">Giriş Yap</button>
     </div>
 
-    <!-- ANA PANEL -->
-    <div id="dashboard" style="display:none;">
-
-        <div style="margin-bottom: 20px;">
-            <button onclick="showSection('market')">Piyasa</button>
-            <button onclick="showSection('portfolio')">Portföy</button>
-            <button onclick="showSection('trade')">Al-Sat</button>
-            <button onclick="showSection('history')">Geçmiş</button>
-        </div>
-
-        <div id="market" class="section">
-            <h2>Piyasa Verileri</h2>
-            <button onclick="loadMarketData()">Piyasayı Güncelle</button>
-            <div id="marketResult" class="result-box"></div>
-        </div>
-
-        <div id="portfolio" class="section" style="display:none;">
-            <h2>Portföyüm</h2>
-            <div id="portfolioResult" class="result-box"></div>
-        </div>
-
-        <div id="trade" class="section" style="display:none;">
-            <h2>Al-Sat İşlemi</h2>
-            <input type="text" id="tradeSymbol" placeholder="Coin (BTCUSDT)">
-            <input type="number" id="tradeAmount" placeholder="Miktar (USDT)">
-            <select id="tradeType" style="padding:14px; font-size:17px; border-radius:10px; background:#0f172a; color:#e0f2fe; border:2px solid #475569; margin:8px;">
-                <option value="buy">AL</option>
-                <option value="sell">SAT</option>
-            </select>
-            <button onclick="executeTrade()">İşlemi Gerçekleştir</button>
-            <div id="tradeResult" class="result-box"></div>
-        </div>
-
-        <div id="history" class="section" style="display:none;">
-            <h2>Emir Geçmişi</h2>
-            <div id="historyResult" class="result-box"></div>
-        </div>
-
+    <div id="main" style="display:none;">
+        <h2>Hoş geldin Erkan</h2>
+        <button onclick="getBTC()">BTC Fiyatı</button>
+        <button onclick="getMarket()">Piyasa Özeti</button>
+        <div id="result" style="margin-top:30px; background:#1e2937; padding:20px; border-radius:12px; min-height:100px;"></div>
     </div>
-</div>
 
-<script>
-// ==================== ŞİFRE GÖSTER / GİZLE ====================
-function togglePassword() {
-    const input = document.getElementById('passwordInput');
-    if (input.type === "password") {
-        input.type = "text";
-    } else {
-        input.type = "password";
-    }
-}
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            input.type = input.type === "password" ? "text" : "password";
+        }
 
-// ==================== GİRİŞ ====================
-function login() {
-    const pass = document.getElementById('passwordInput').value;
-    
-    if (pass === "Serkan.456154") {
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        updateBalance();
-        loadMarketData();
-    } else {
-        alert("Şifre yanlış!");
-    }
-}
+        function login() {
+            const pass = document.getElementById('passwordInput').value;
+            if (pass === "Serkan.456154") {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('main').style.display = 'block';
+                getMarket();
+            } else {
+                alert("Yanlış şifre!");
+            }
+        }
 
-// Enter tuşu ile giriş
-document.getElementById('passwordInput').addEventListener('keypress', function(event) {
-    if (event.key === "Enter") {
-        login();
-    }
-});
+        async function getBTC() {
+            const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+            const data = await res.json();
+            document.getElementById('result').innerHTML = 'BTC: $' + parseFloat(data.price).toLocaleString();
+        }
 
-// ==================== BAKİYE ====================
-let userBalance = 1000;
-let positions = {};
-let tradeHistory = [];
-
-function updateBalance() {
+        async function getMarket() {
+            const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+            const data = await res.json();
+            let html = '<h3>Piyasa Özeti</h3>';
+            data.slice(0,10).forEach(c => {
+                const ch = parseFloat(c.priceChangePercent);
+                html += `<div>${c.symbol} <span style="color:${ch>=0?'lime':'red'}">${ch.toFixed(2)}%</span></div>`;
+            });
+            document.getElementById('result').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
