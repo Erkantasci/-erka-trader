@@ -30,7 +30,8 @@
 <div class="header">
     <div class="logo">🚀 Erka Trader Pro</div>
     <div class="balance-box">
-        Bakiye: <span id="balance">1000.00</span> USDT
+        Bakiye: <span id="balance">1000.00</span> USDT | 
+        Toplam Kar: <span id="totalProfitHeader" style="color:#22c55e;">0.00</span> USDT
     </div>
 </div>
 
@@ -56,7 +57,6 @@
             <button onclick="toggleAutoBot()">Botu Başlat / Durdur</button>
             <span id="botStatus" style="margin-left:20px; font-weight:bold; color:#ef4444;">DURDU</span>
             <div id="botLog" style="margin-top:15px; font-size:15px; max-height:160px; overflow-y:auto; background:#111827; padding:12px; border-radius:8px;"></div>
-            <div id="botProfit" style="margin-top:12px; font-size:19px; color:#22c55e;">Toplam Kar: <span id="totalProfit">0.00</span> USDT</div>
         </div>
 
         <div class="tab-bar">
@@ -131,6 +131,7 @@ document.getElementById('passwordInput').addEventListener('keypress', function(e
 // ==================== BAKİYE ====================
 function updateBalance() {
     document.getElementById('balance').innerText = userBalance.toFixed(2);
+    document.getElementById('totalProfitHeader').innerText = totalProfit.toFixed(2);
 }
 
 // ==================== PİYASA ====================
@@ -302,6 +303,7 @@ function toggleAutoBot() {
                 updateBalance();
                 showPortfolio();
                 document.getElementById('totalProfit').innerText = totalProfit.toFixed(2);
+                document.getElementById('totalProfitHeader').innerText = totalProfit.toFixed(2);
 
             } catch (e) {
                 log.innerHTML += "Bot hatası...<br>";
