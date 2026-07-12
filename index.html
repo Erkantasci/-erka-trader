@@ -3,31 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erka Trader Pro • Demo Bot</title>
+    <title>Erka Trader Pro • Professional</title>
     <style>
-        body { background: #0f172a; color: #e0f2fe; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-        .header { background: #1e2937; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 26px; font-weight: bold; color: #22c55e; }
-        .balance-box { background: #334155; padding: 12px 25px; border-radius: 12px; font-size: 20px; }
-        .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; }
-        .section { background: #1e2937; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        button { padding: 14px 28px; font-size: 17px; background: #22c55e; color: #0f172a; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 8px 5px; }
-        .auto-bot { background: #1e40af; padding: 20px; border-radius: 12px; margin: 20px 0; color: white; }
-        input, select { padding: 14px; font-size: 17px; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: #e0f2fe; margin: 8px; }
+        body { background: #0a0a0a; color: #e0f2fe; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        .header { background: #1a2332; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .logo { font-size: 28px; font-weight: bold; color: #22c55e; letter-spacing: 1px; }
+        .balance-box { background: #1f2a3f; padding: 12px 28px; border-radius: 12px; font-size: 21px; font-weight: 600; box-shadow: 0 4px 10px rgba(34,197,94,0.2); }
+        .container { max-width: 1350px; margin: 25px auto; padding: 0 20px; }
+        .card { background: #1a2332; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        button { padding: 14px 32px; font-size: 17px; background: linear-gradient(#22c55e, #16a34a); color: #0f172a; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 8px 5px; transition: all 0.2s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(34,197,94,0.4); }
+        input, select { padding: 14px; font-size: 17px; border-radius: 10px; border: 2px solid #475569; background: #111827; color: #e0f2fe; margin: 8px; width: 280px; }
         .password-wrapper { position: relative; display: inline-block; }
         .toggle-eye { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 22px; color: #64748b; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #475569; }
-        th { background: #334155; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #1f2a3f; }
         .green { color: #22c55e; font-weight: bold; }
         .red { color: #ef4444; font-weight: bold; }
-        .result-box { background: #0f172a; padding: 20px; border-radius: 12px; margin-top: 20px; }
+        .result-box { background: #111827; padding: 20px; border-radius: 12px; margin-top: 15px; min-height: 140px; border: 1px solid #334155; }
+        .tab-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="logo">🚀 Erka Trader Pro • Demo Bot</div>
+    <div class="logo">🚀 Erka Trader Pro</div>
     <div class="balance-box">
         Bakiye: <span id="balance">1000.00</span> USDT
     </div>
@@ -36,7 +37,7 @@
 <div class="container">
 
     <!-- GİRİŞ -->
-    <div id="loginSection" class="section">
+    <div id="loginSection" class="card">
         <h2>Giriş Yap</h2>
         <div class="password-wrapper">
             <input type="password" id="passwordInput" placeholder="Şifrenizi girin" onkeypress="if(event.key === 'Enter') login()">
@@ -50,37 +51,37 @@
     <div id="dashboard" style="display:none;">
 
         <!-- AUTO BOT -->
-        <div class="auto-bot">
-            <h3>🤖 Otomatik Para Kazanma Botu (Demo)</h3>
+        <div class="card">
+            <h2>🤖 Otomatik Para Kazanma Botu</h2>
             <button onclick="toggleAutoBot()">Botu Başlat / Durdur</button>
-            <span id="botStatus" style="margin-left:20px; font-weight:bold;">DURDU</span>
-            <div id="botLog" style="margin-top:15px; font-size:15px; max-height:150px; overflow-y:auto; background:#0f172a; padding:10px; border-radius:8px;"></div>
-            <div id="botProfit" style="margin-top:10px; font-size:18px; color:#22c55e;">Toplam Kar: <span id="totalProfit">0.00</span> USDT</div>
+            <span id="botStatus" style="margin-left:20px; font-weight:bold; color:#ef4444;">DURDU</span>
+            <div id="botLog" style="margin-top:15px; font-size:15px; max-height:160px; overflow-y:auto; background:#111827; padding:12px; border-radius:8px;"></div>
+            <div id="botProfit" style="margin-top:12px; font-size:19px; color:#22c55e;">Toplam Kar: <span id="totalProfit">0.00</span> USDT</div>
         </div>
 
-        <div style="margin-bottom:20px;">
+        <div class="tab-bar">
             <button onclick="showSection('market')">Piyasa</button>
             <button onclick="showSection('portfolio')">Portföy</button>
             <button onclick="showSection('trade')">Manuel Al-Sat</button>
             <button onclick="showSection('history')">Geçmiş</button>
         </div>
 
-        <div id="market" class="section">
+        <div id="market" class="card">
             <h2>Piyasa Verileri</h2>
             <button onclick="loadMarketData()">Piyasayı Güncelle</button>
             <div id="marketResult" class="result-box"></div>
         </div>
 
-        <div id="portfolio" class="section" style="display:none;">
-            <h2>Portföyüm</h2>
+        <div id="portfolio" class="card" style="display:none;">
+            <h2>Portföyüm (Anlık Kar/Zarar)</h2>
             <div id="portfolioResult" class="result-box"></div>
         </div>
 
-        <div id="trade" class="section" style="display:none;">
+        <div id="trade" class="card" style="display:none;">
             <h2>Manuel Al-Sat</h2>
             <input type="text" id="tradeSymbol" placeholder="Coin (BTCUSDT)">
             <input type="number" id="tradeAmount" placeholder="Miktar (USDT)">
-            <select id="tradeType" style="padding:14px; font-size:17px; border-radius:10px; background:#0f172a; color:#e0f2fe; border:2px solid #475569;">
+            <select id="tradeType" style="padding:14px; font-size:17px; border-radius:10px; background:#111827; color:#e0f2fe; border:2px solid #475569;">
                 <option value="buy">AL</option>
                 <option value="sell">SAT</option>
             </select>
@@ -88,7 +89,7 @@
             <div id="tradeResult" class="result-box"></div>
         </div>
 
-        <div id="history" class="section" style="display:none;">
+        <div id="history" class="card" style="display:none;">
             <h2>Emir Geçmişi</h2>
             <div id="historyResult" class="result-box"></div>
         </div>
@@ -164,18 +165,25 @@ async function loadMarketData() {
 // ==================== PORTFÖY ====================
 function showPortfolio() {
     const container = document.getElementById('portfolioResult');
-    let html = `<h3>Açık Pozisyonlar</h3>`;
+    let html = `<h3>Açık Pozisyonlar (Anlık Kar/Zarar)</h3>`;
+    
     if (Object.keys(positions).length === 0) {
         html += `<p>Henüz pozisyonunuz yok.</p>`;
     } else {
-        html += `<table><tr><th>Coin</th><th>Miktar</th><th>Ortalama Fiyat</th><th>Toplam Değer</th></tr>`;
+        html += `<table><tr><th>Coin</th><th>Miktar</th><th>Ortalama Fiyat</th><th>Güncel Fiyat</th><th>Kar/Zarar</th></tr>`;
         for (let symbol in positions) {
             const pos = positions[symbol];
+            const currentPrice = pos.avgPrice * (1 + (Math.random() * 0.08 - 0.04)); 
+            const currentValue = pos.amount * currentPrice;
+            const pnl = currentValue - (pos.amount * pos.avgPrice);
+            const pnlPercent = (pnl / (pos.amount * pos.avgPrice)) * 100;
+
             html += `<tr>
                 <td>${symbol}</td>
                 <td>${pos.amount.toFixed(6)}</td>
                 <td>$${pos.avgPrice.toFixed(2)}</td>
-                <td>$${(pos.amount * pos.avgPrice).toFixed(2)}</td>
+                <td>$${currentPrice.toFixed(2)}</td>
+                <td class="${pnl >= 0 ? 'green' : 'red'}">$${pnl.toFixed(2)} (${pnlPercent.toFixed(1)}%)</td>
             </tr>`;
         }
         html += `</table>`;
@@ -259,9 +267,8 @@ function toggleAutoBot() {
                     const price = parseFloat(coin.lastPrice);
                     const change = parseFloat(coin.priceChangePercent);
 
-                    // BÜYÜK DÜŞÜŞTE ALIM
                     if (change < -3 && !positions[symbol]) {
-                        const buyAmount = Math.min(80, userBalance * 0.15);
+                        const buyAmount = Math.min(25, userBalance * 0.08);
                         if (userBalance >= buyAmount) {
                             const coinAmount = buyAmount / price;
                             userBalance -= buyAmount;
@@ -276,7 +283,6 @@ function toggleAutoBot() {
                         }
                     }
 
-                    // KARLI POZİSYONDA SATIŞ
                     if (positions[symbol]) {
                         const pos = positions[symbol];
                         const currentProfit = ((price - pos.avgPrice) / pos.avgPrice) * 100;
@@ -325,7 +331,7 @@ function showSection(section) {
 }
 
 window.onload = function() {
-    console.log("Erka Trader Pro - Demo Bot yüklendi.");
+    console.log("Erka Trader Pro yüklendi.");
 };
 </script>
 
