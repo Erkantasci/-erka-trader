@@ -68,6 +68,8 @@
             <button onclick="showSection('portfolio')">Portföy</button>
             <button onclick="showSection('trade')">Manuel Al-Sat</button>
             <button onclick="showSection('history')">Geçmiş</button>
+            <button onclick="showSection('stats')">İstatistik</button>
+            <button onclick="showSection('ai')">AI Analiz</button>
         </div>
 
         <div id="market" class="card">
@@ -99,6 +101,23 @@
             <div id="historyResult" class="result-box"></div>
         </div>
 
+        <div id="stats" class="card" style="display:none;">
+            <h2>📊 Performans İstatistikleri</h2>
+            <button onclick="showStats()">İstatistikleri Güncelle</button>
+            <div id="statsResult" class="result-box"></div>
+        </div>
+
+        <div id="ai" class="card" style="display:none;">
+            <h2>🧠 AI Portföy Analizi</h2>
+            <p style="color:#94a3b8; font-size:14px;">Claude API anahtarın gerekiyor (console.anthropic.com'dan alınır). Anahtar sadece bu sayfada kalır, hiçbir yere kaydedilmez — sayfayı yenilersen tekrar girmen gerekir. Bu anahtarı kimseyle paylaşma.</p>
+            <input type="password" id="aiApiKey" placeholder="Claude API Key (sk-ant-...)">
+            <br>
+            <button onclick="runAIAnalysis()">Şimdi Analiz Et</button>
+            <button onclick="toggleAutoAI()">Günde 1 Kez Otomatik: <span id="autoAIStatus">KAPALI</span></button>
+            <p style="color:#64748b; font-size:13px;">Not: Otomatik mod sadece sayfa açık ve önde kaldığı sürece çalışır, cihaz kilitliyken tetiklenmez.</p>
+            <div id="aiResult" class="result-box">Henüz analiz yapılmadı.</div>
+        </div>
+
     </div>
 </div>
 
@@ -111,10 +130,13 @@ let autoBotRunning = false;
 let botInterval = null;
 let totalProfit = 0;
 const FEE_RATE = 0.001;
-const STOP_LOSS = 5;
-const TAKE_PROFIT = 1.5;
+const STOP_LOSS = 1.5;
+const TAKE_PROFIT = 1;
 const MAX_POSITIONS = 3;
 const DIP_THRESHOLD = -3;
+const SELL_COOLDOWN_MS = 5 * 60 * 1000;
+let lastSellTime = {};
+const WATCHLIST = ["BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT","ADAUSDT","DOGEUSDT","AVAXUSDT","LINKUSDT","DOTUSDT","MATICUSDT","LTCUSDT","TRXUSDT","ATOMUSDT","NEARUSDT","APTUSDT","ARBUSDT","OPUSDT","SUIUSDT","INJUSDT"];
 const MIN_QUOTE_VOLUME = 5000000;
 
 // ==================== ŞİFRE ====================
@@ -274,138 +296,3 @@ async function executeTrade() {
 
         if (type === "buy") {
             if (userBalance < amount) {
-                resultBox.innerHTML = `<p style="color:#ef4444">Yetersiz bakiye!</p>`;
-                return;
-            }
-            price = price * 0.999;
-            const coinAmount = netAmount / price;
-            userBalance -= amount;
-
-            if (!positions[symbol]) positions[symbol] = { amount: 0, avgPrice: 0 };
-            const oldAmount = positions[symbol].amount;
-            positions[symbol].avgPrice = ((positions[symbol].avgPrice * oldAmount) + (price * coinAmount)) / (oldAmount + coinAmount);
-            positions[symbol].amount += coinAmount;
-
-            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "ALIM (Demo)", symbol, amount: coinAmount, price, total: netAmount, fee });
-            resultBox.innerHTML = `<p style="color:#22c55e"><strong>ALIM BAŞARILI (Demo)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
-        }
-        else if (type === "sell") {
-            if (!positions[symbol] || positions[symbol].amount < (netAmount / price)) {
-                resultBox.innerHTML = `<p style="color:#ef4444">Yeterli coin yok!</p>`;
-                return;
-            }
-            price = price * 1.001;
-            const sellAmount = netAmount / price;
-            positions[symbol].amount -= sellAmount;
-            userBalance += netAmount;
-            if (positions[symbol].amount <= 0) delete positions[symbol];
-
-            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "SATIM (Demo)", symbol, amount: sellAmount, price, total: netAmount, fee });
-            resultBox.innerHTML = `<p style="color:#22c55e"><strong>SATIM BAŞARILI (Demo)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
-        }
-        updateBalance();
-    } catch (e) {
-        resultBox.innerHTML = `<p style="color:#ef4444">İşlem başarısız oldu.</p>`;
-    }
-}
-
-// ==================== OTOMATİK BOT (Demo) ====================
-function toggleAutoBot() {
-    const status = document.getElementById('botStatus');
-    const log = document.getElementById('botLog');
-
-    if (!autoBotRunning) {
-        autoBotRunning = true;
-        status.innerHTML = "ÇALIŞIYOR (Demo)";
-        status.style.color = "#22c55e";
-        log.innerHTML = "Bot başlatıldı (demo). Gerçek para kullanılmıyor.<br>";
-
-        botInterval = setInterval(async () => {
-            if (!autoBotRunning) return;
-
-            try {
-                const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
-                const data = await res.json();
-
-                const candidates = data.filter(c =>
-                    c.symbol.endsWith('USDT') &&
-                    parseFloat(c.quoteVolume) >= MIN_QUOTE_VOLUME
-                );
-
-                for (let coin of candidates) {
-                    const symbol = coin.symbol;
-                    let price = parseFloat(coin.lastPrice);
-                    const change = parseFloat(coin.priceChangePercent);
-
-                    if (change < DIP_THRESHOLD && !positions[symbol] && userBalance > 50 && Object.keys(positions).length < MAX_POSITIONS) {
-                        const buyAmount = Math.min(10, userBalance * 0.03);
-                        if (userBalance >= buyAmount) {
-                            const fee = buyAmount * FEE_RATE;
-                            const netAmount = buyAmount - fee;
-                            price = price * 0.999;
-                            const coinAmount = netAmount / price;
-                            userBalance -= buyAmount;
-
-                            if (!positions[symbol]) positions[symbol] = { amount: 0, avgPrice: 0 };
-                            const oldAmount = positions[symbol].amount;
-                            positions[symbol].avgPrice = ((positions[symbol].avgPrice * oldAmount) + (price * coinAmount)) / (oldAmount + coinAmount);
-                            positions[symbol].amount += coinAmount;
-
-                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT ALIM (Demo)", symbol, amount: coinAmount, price, total: netAmount, fee });
-                            log.innerHTML += `BOT: ${symbol} alındı (${change.toFixed(1)}% düşüş)<br>`;
-                        }
-                    }
-
-                    if (positions[symbol]) {
-                        const pos = positions[symbol];
-                        const currentProfit = ((price - pos.avgPrice) / pos.avgPrice) * 100;
-                        const currentLoss = -currentProfit;
-
-                        if (currentProfit > TAKE_PROFIT || currentLoss > STOP_LOSS) {
-                            const sellValue = pos.amount * price;
-                            const fee = sellValue * FEE_RATE;
-                            const netSell = sellValue - fee;
-                            const adjPrice = price * 1.001;
-                            userBalance += netSell;
-                            totalProfit += (netSell - (pos.amount * pos.avgPrice));
-
-                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT SATIM (Demo)", symbol, amount: pos.amount, price: adjPrice, total: netSell, fee });
-                            log.innerHTML += `BOT: ${symbol} satıldı (${currentProfit > 0 ? '+' : ''}${currentProfit.toFixed(1)}% ${currentProfit > 0 ? 'kar' : 'zarar'})<br>`;
-                            delete positions[symbol];
-                        }
-                    }
-                }
-
-                updateBalance();
-                log.scrollTop = log.scrollHeight;
-
-            } catch (e) {
-                log.innerHTML += "Bot hatası: " + e.message + "<br>";
-            }
-        }, 25000);
-
-    } else {
-        autoBotRunning = false;
-        clearInterval(botInterval);
-        status.innerHTML = "DURDU";
-        status.style.color = "#ef4444";
-        log.innerHTML += "Bot durduruldu.<br>";
-    }
-}
-
-// ==================== SEKSİYON DEĞİŞTİR ====================
-function showSection(section) {
-    document.getElementById('market').style.display = 'none';
-    document.getElementById('portfolio').style.display = 'none';
-    document.getElementById('trade').style.display = 'none';
-    document.getElementById('history').style.display = 'none';
-
-    document.getElementById(section).style.display = 'block';
-
-    if (section === 'portfolio') showPortfolio();
-    if (section === 'history') showHistory();
-}
-</script>
-
-</body>
-</html>
