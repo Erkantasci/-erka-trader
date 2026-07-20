@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erka Trader Pro • Professional</title>
+    <title>Erka Trader Pro • Demo</title>
     <style>
         body { background: #0a0a0a; color: #e0f2fe; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-        .header { background: #1a2332; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .header { background: #1a2332; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); flex-wrap: wrap; gap: 10px; }
         .logo { font-size: 28px; font-weight: bold; color: #22c55e; letter-spacing: 1px; }
         .balance-box { background: #1f2a3f; padding: 12px 28px; border-radius: 12px; font-size: 21px; font-weight: 600; box-shadow: 0 4px 10px rgba(34,197,94,0.2); }
+        .demo-banner { background: #f59e0b; color: #1a1200; text-align: center; padding: 8px; font-weight: bold; font-size: 14px; letter-spacing: 0.5px; }
         .container { max-width: 1350px; margin: 25px auto; padding: 0 20px; }
         .card { background: #1a2332; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
         button { padding: 14px 32px; font-size: 17px; background: linear-gradient(#22c55e, #16a34a); color: #0f172a; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 8px 5px; transition: all 0.2s; }
@@ -27,10 +28,12 @@
 </head>
 <body>
 
+<div class="demo-banner">⚠️ DEMO MODU — Gerçek Binance hesabına bağlı değil. Bakiye ve pozisyonlar hayalidir, gerçek para kullanılmaz.</div>
+
 <div class="header">
-    <div class="logo">🚀 Erka Trader Pro</div>
+    <div class="logo">🚀 Erka Trader Pro (Demo)</div>
     <div class="balance-box">
-        Bakiye: <span id="balance">1000.00</span> USDT | 
+        Bakiye: <span id="balance">1000.00</span> USDT |
         Toplam Kar: <span id="totalProfitHeader" style="color:#22c55e;">0.00</span> USDT
     </div>
 </div>
@@ -38,10 +41,11 @@
 <div class="container">
 
     <!-- GİRİŞ -->
-    <div id="loginSection" class="card">
+    <div id="loginSection" class="card" style="display:none;">
         <h2>Giriş Yap</h2>
+        <p style="color:#94a3b8; font-size:14px;">Not: Bu şifre sadece bu demo sayfasını kilitler, gerçek bir güvenlik katmanı değildir — sayfa kaynağında görülebilir.</p>
         <div class="password-wrapper">
-            <input type="password" id="passwordInput" placeholder="Şifrenizi girin" onkeypress="if(event.key === 'Enter') login()">
+            <input type="password" id="passwordInput" placeholder="Şifrenizi girin">
             <span class="toggle-eye" onclick="togglePassword()">👁️</span>
         </div>
         <br>
@@ -49,11 +53,11 @@
     </div>
 
     <!-- ANA PANEL -->
-    <div id="dashboard" style="display:none;">
+    <div id="dashboard" style="display:block;">
 
         <!-- AUTO BOT -->
         <div class="card">
-            <h2>🤖 Otomatik Para Kazanma Botu</h2>
+            <h2>🤖 Otomatik Demo Botu</h2>
             <button onclick="toggleAutoBot()">Botu Başlat / Durdur</button>
             <span id="botStatus" style="margin-left:20px; font-weight:bold; color:#ef4444;">DURDU</span>
             <div id="botLog" style="margin-top:15px; font-size:15px; max-height:160px; overflow-y:auto; background:#111827; padding:12px; border-radius:8px;"></div>
@@ -73,12 +77,13 @@
         </div>
 
         <div id="portfolio" class="card" style="display:none;">
-            <h2>Portföyüm (Anlık Kar/Zarar)</h2>
+            <h2>Portföyüm (Anlık Kar/Zarar — gerçek fiyatlarla)</h2>
+            <button onclick="showPortfolio()">Portföyü Güncelle</button>
             <div id="portfolioResult" class="result-box"></div>
         </div>
 
         <div id="trade" class="card" style="display:none;">
-            <h2>Manuel Al-Sat</h2>
+            <h2>Manuel Al-Sat (Demo)</h2>
             <input type="text" id="tradeSymbol" placeholder="Coin (BTCUSDT)">
             <input type="number" id="tradeAmount" placeholder="Miktar (USDT)">
             <select id="tradeType" style="padding:14px; font-size:17px; border-radius:10px; background:#111827; color:#e0f2fe; border:2px solid #475569;">
@@ -107,7 +112,10 @@ let botInterval = null;
 let totalProfit = 0;
 const FEE_RATE = 0.001;
 const STOP_LOSS = 5;
+const TAKE_PROFIT = 1.5;
 const MAX_POSITIONS = 3;
+const DIP_THRESHOLD = -3;
+const MIN_QUOTE_VOLUME = 5000000;
 
 // ==================== ŞİFRE ====================
 function togglePassword() {
@@ -131,6 +139,9 @@ document.getElementById('passwordInput').addEventListener('keypress', function(e
     if (e.key === "Enter") login();
 });
 
+updateBalance();
+loadMarketData();
+
 // ==================== BAKİYE ====================
 function updateBalance() {
     document.getElementById('balance').innerText = userBalance.toFixed(2);
@@ -147,8 +158,9 @@ async function loadMarketData() {
         const data = await res.json();
 
         let html = `<table><tr><th>Coin</th><th>Fiyat</th><th>24s Değişim</th></tr>`;
-        
-        data.sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent))
+
+        data.filter(c => c.symbol.endsWith('USDT'))
+            .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent))
             .slice(0, 40)
             .forEach(coin => {
                 const change = parseFloat(coin.priceChangePercent);
@@ -166,19 +178,32 @@ async function loadMarketData() {
     }
 }
 
-// ==================== PORTFÖY ====================
-function showPortfolio() {
+// ==================== PORTFÖY (gerçek fiyatla) ====================
+async function showPortfolio() {
     const container = document.getElementById('portfolioResult');
-    let html = `<h3>Açık Pozisyonlar (Anlık Kar/Zarar)</h3>`;
-    let totalValue = 0;
-    
-    if (Object.keys(positions).length === 0) {
-        html += `<p>Henüz pozisyonunuz yok.</p>`;
-    } else {
-        html += `<table><tr><th>Coin</th><th>Miktar</th><th>Ortalama Fiyat</th><th>Güncel Fiyat</th><th>Kar/Zarar</th></tr>`;
-        for (let symbol in positions) {
+    const symbols = Object.keys(positions);
+
+    if (symbols.length === 0) {
+        container.innerHTML = `<p>Henüz pozisyonunuz yok.</p>`;
+        return;
+    }
+
+    container.innerHTML = "Yükleniyor...";
+
+    try {
+        const prices = {};
+        await Promise.all(symbols.map(async (symbol) => {
+            const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+            const data = await res.json();
+            prices[symbol] = parseFloat(data.price);
+        }));
+
+        let html = `<table><tr><th>Coin</th><th>Miktar</th><th>Ortalama Fiyat</th><th>Güncel Fiyat</th><th>Kar/Zarar</th></tr>`;
+        let totalValue = 0;
+
+        for (let symbol of symbols) {
             const pos = positions[symbol];
-            const currentPrice = pos.avgPrice * (1 + (Math.random() * 0.08 - 0.04)); 
+            const currentPrice = prices[symbol];
             const currentValue = pos.amount * currentPrice;
             const pnl = currentValue - (pos.amount * pos.avgPrice);
             const pnlPercent = (pnl / (pos.amount * pos.avgPrice)) * 100;
@@ -193,7 +218,33 @@ function showPortfolio() {
             </tr>`;
         }
         html += `</table><p style="margin-top:15px;">Toplam Portföy Değeri: <strong>$${totalValue.toFixed(2)}</strong></p>`;
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = "Portföy verisi alınamadı.";
     }
+}
+
+// ==================== GEÇMİŞ ====================
+function showHistory() {
+    const container = document.getElementById('historyResult');
+    if (tradeHistory.length === 0) {
+        container.innerHTML = `<p>Henüz işlem yapılmadı.</p>`;
+        return;
+    }
+    let html = `<table><tr><th>Saat</th><th>Tür</th><th>Coin</th><th>Miktar</th><th>Fiyat</th><th>Toplam</th><th>Ücret</th></tr>`;
+    tradeHistory.forEach(t => {
+        const colorClass = t.type.includes('ALIM') ? 'green' : 'red';
+        html += `<tr>
+            <td>${t.time}</td>
+            <td class="${colorClass}">${t.type}</td>
+            <td>${t.symbol}</td>
+            <td>${t.amount.toFixed(6)}</td>
+            <td>$${t.price.toFixed(2)}</td>
+            <td>$${t.total.toFixed(2)}</td>
+            <td>$${t.fee.toFixed(2)}</td>
+        </tr>`;
+    });
+    html += `</table>`;
     container.innerHTML = html;
 }
 
@@ -212,6 +263,10 @@ async function executeTrade() {
     try {
         const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
         const data = await res.json();
+        if (!data.price) {
+            resultBox.innerHTML = `<p style="color:#ef4444">Geçersiz coin sembolü.</p>`;
+            return;
+        }
         let price = parseFloat(data.price);
 
         const fee = amount * FEE_RATE;
@@ -231,9 +286,9 @@ async function executeTrade() {
             positions[symbol].avgPrice = ((positions[symbol].avgPrice * oldAmount) + (price * coinAmount)) / (oldAmount + coinAmount);
             positions[symbol].amount += coinAmount;
 
-            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "ALIM (Maker)", symbol, amount: coinAmount, price, total: netAmount, fee });
-            resultBox.innerHTML = `<p style="color:#22c55e"><strong>ALIM BAŞARILI (Maker)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
-        } 
+            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "ALIM (Demo)", symbol, amount: coinAmount, price, total: netAmount, fee });
+            resultBox.innerHTML = `<p style="color:#22c55e"><strong>ALIM BAŞARILI (Demo)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
+        }
         else if (type === "sell") {
             if (!positions[symbol] || positions[symbol].amount < (netAmount / price)) {
                 resultBox.innerHTML = `<p style="color:#ef4444">Yeterli coin yok!</p>`;
@@ -245,26 +300,25 @@ async function executeTrade() {
             userBalance += netAmount;
             if (positions[symbol].amount <= 0) delete positions[symbol];
 
-            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "SATIM (Maker)", symbol, amount: sellAmount, price, total: netAmount, fee });
-            resultBox.innerHTML = `<p style="color:#22c55e"><strong>SATIM BAŞARILI (Maker)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
+            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "SATIM (Demo)", symbol, amount: sellAmount, price, total: netAmount, fee });
+            resultBox.innerHTML = `<p style="color:#22c55e"><strong>SATIM BAŞARILI (Demo)</strong> (Ücret: $${fee.toFixed(2)})</p>`;
         }
         updateBalance();
-        showPortfolio();
     } catch (e) {
         resultBox.innerHTML = `<p style="color:#ef4444">İşlem başarısız oldu.</p>`;
     }
 }
 
-// ==================== OTOMATİK BOT ====================
+// ==================== OTOMATİK BOT (Demo) ====================
 function toggleAutoBot() {
     const status = document.getElementById('botStatus');
     const log = document.getElementById('botLog');
 
     if (!autoBotRunning) {
         autoBotRunning = true;
-        status.innerHTML = "ÇALIŞIYOR";
+        status.innerHTML = "ÇALIŞIYOR (Demo)";
         status.style.color = "#22c55e";
-        log.innerHTML = "Bot başlatıldı. Akıllı strateji ile para kazanmaya odaklandı...<br>";
+        log.innerHTML = "Bot başlatıldı (demo). Gerçek para kullanılmıyor.<br>";
 
         botInterval = setInterval(async () => {
             if (!autoBotRunning) return;
@@ -273,12 +327,17 @@ function toggleAutoBot() {
                 const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
                 const data = await res.json();
 
-                for (let coin of data) {
+                const candidates = data.filter(c =>
+                    c.symbol.endsWith('USDT') &&
+                    parseFloat(c.quoteVolume) >= MIN_QUOTE_VOLUME
+                );
+
+                for (let coin of candidates) {
                     const symbol = coin.symbol;
                     let price = parseFloat(coin.lastPrice);
                     const change = parseFloat(coin.priceChangePercent);
 
-                    if (change < -3 && !positions[symbol] && userBalance > 50 && Object.keys(positions).length < MAX_POSITIONS) {
+                    if (change < DIP_THRESHOLD && !positions[symbol] && userBalance > 50 && Object.keys(positions).length < MAX_POSITIONS) {
                         const buyAmount = Math.min(10, userBalance * 0.03);
                         if (userBalance >= buyAmount) {
                             const fee = buyAmount * FEE_RATE;
@@ -292,7 +351,7 @@ function toggleAutoBot() {
                             positions[symbol].avgPrice = ((positions[symbol].avgPrice * oldAmount) + (price * coinAmount)) / (oldAmount + coinAmount);
                             positions[symbol].amount += coinAmount;
 
-                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT ALIM (Maker)", symbol, amount: coinAmount, price, total: netAmount, fee });
+                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT ALIM (Demo)", symbol, amount: coinAmount, price, total: netAmount, fee });
                             log.innerHTML += `BOT: ${symbol} alındı (${change.toFixed(1)}% düşüş)<br>`;
                         }
                     }
@@ -302,28 +361,26 @@ function toggleAutoBot() {
                         const currentProfit = ((price - pos.avgPrice) / pos.avgPrice) * 100;
                         const currentLoss = -currentProfit;
 
-                        if (currentProfit > 1.5 || currentLoss > STOP_LOSS) {
-                            const sellAmount = pos.amount * price;
-                            const fee = sellAmount * FEE_RATE;
-                            const netSell = sellAmount - fee;
-                            price = price * 1.001;
+                        if (currentProfit > TAKE_PROFIT || currentLoss > STOP_LOSS) {
+                            const sellValue = pos.amount * price;
+                            const fee = sellValue * FEE_RATE;
+                            const netSell = sellValue - fee;
+                            const adjPrice = price * 1.001;
                             userBalance += netSell;
                             totalProfit += (netSell - (pos.amount * pos.avgPrice));
-                            delete positions[symbol];
 
-                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT SATIM (Maker)", symbol, amount: pos.amount, price, total: netSell, fee });
+                            tradeHistory.unshift({ time: new Date().toLocaleTimeString(), type: "BOT SATIM (Demo)", symbol, amount: pos.amount, price: adjPrice, total: netSell, fee });
                             log.innerHTML += `BOT: ${symbol} satıldı (${currentProfit > 0 ? '+' : ''}${currentProfit.toFixed(1)}% ${currentProfit > 0 ? 'kar' : 'zarar'})<br>`;
+                            delete positions[symbol];
                         }
                     }
                 }
 
                 updateBalance();
-                showPortfolio();
-                document.getElementById('totalProfit').innerText = totalProfit.toFixed(2);
-                document.getElementById('totalProfitHeader').innerText = totalProfit.toFixed(2);
+                log.scrollTop = log.scrollHeight;
 
             } catch (e) {
-                log.innerHTML += "Bot hatası...<br>";
+                log.innerHTML += "Bot hatası: " + e.message + "<br>";
             }
         }, 25000);
 
@@ -348,10 +405,6 @@ function showSection(section) {
     if (section === 'portfolio') showPortfolio();
     if (section === 'history') showHistory();
 }
-
-window.onload = function() {
-    console.log("Erka Trader Pro yüklendi.");
-};
 </script>
 
 </body>
